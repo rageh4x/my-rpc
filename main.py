@@ -3,21 +3,18 @@ import websocket
 import threading
 import time
 
-# Apni Discord App ki Client ID yahan dalein
+TOKEN = "MTM3Njk1Mzc2ODYXNjEzMjYjYOMA.GBijKN.KdtmouadKHwkQE_dEdQtAsVwXsAN2SyKjeIYKE"
 CLIENT_ID = "1552641681617326110"
 
 def run_rpc():
     while True:
         try:
-            # Discord Gateway WebSocket URL
             ws_url = "wss://gateway.discord.gg/?v=10&encoding=json"
             ws = websocket.create_connection(ws_url)
             
-            # Hello payload ka wait karein
             event = json.loads(ws.recv())
             heartbeat_interval = event['d']['heartbeat_interval'] / 1000
 
-            # Heartbeat thread start karein taaki connection zinda rahe
             def heartbeat(interval, ws_conn):
                 while True:
                     time.sleep(interval)
@@ -28,16 +25,28 @@ def run_rpc():
 
             threading.Thread(target=heartbeat, args=(heartbeat_interval, ws), daemon=True).start()
 
-            # Presence (Rich Presence) payload bhejein
-            payload = {
+            identify_payload = {
+                "op": 2,
+                "d": {
+                    "token": TOKEN,
+                    "properties": {
+                        "os": "Windows",
+                        "browser": "Chrome",
+                        "device": ""
+                    }
+                }
+            }
+            ws.send(json.dumps(identify_payload))
+
+            presence_payload = {
                 "op": 3,
                 "d": {
                     "since": int(time.time() * 1000),
                     "activities": [{
-                        "name": "Custom RPC",
-                        "type": 0,  # 0 matlab Playing
-                        "state": "Free Fire khel raha hu",
-                        "details": "Rank Push",
+                        "name": "Fast Client",
+                        "type": 0,  # 0 = Playing
+                        "state": "In Game",
+                        "details": "Playing Minecraft 1.21.11",
                         "application_id": CLIENT_ID,
                         "timestamps": {
                             "start": int(time.time())
@@ -48,7 +57,8 @@ def run_rpc():
                 }
             }
             
-            ws.send(json.dumps(payload))
+            time.sleep(2)
+            ws.send(json.dumps(presence_payload))
             print("RPC Successfully Connected and Active!")
 
             while True:
