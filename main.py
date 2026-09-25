@@ -2,9 +2,25 @@ import json
 import websocket
 import threading
 import time
+import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 TOKEN = "MTM3Njk1Mzc2ODYXNjEzMjYjYOMA.GBijKN.KdtmouadKHwkQE_dEdQtAsVwXsAN2SyKjeIYKE"
 CLIENT_ID = "1552641681617326110"
+
+# Render ke port requirement ko satisfy karne ke liye dummy HTTP server
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"RPC is running 24/7!")
+
+def run_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
+    print(f"HTTP server running on port {port}")
+    server.serve_forever()
 
 def run_rpc():
     while True:
@@ -68,4 +84,7 @@ def run_rpc():
             time.sleep(5)
 
 if __name__ == "__main__":
+    # Render ke liye HTTP server alag thread mein chalega
+    threading.Thread(target=run_server, daemon=True).start()
+    # Main thread mein Discord RPC chalega
     run_rpc()
